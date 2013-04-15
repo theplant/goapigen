@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/sunfmin/goapigen/parser"
+	"github.com/theplant/goapigen/parser"
 	"go/build"
 	"os"
 	"path/filepath"
