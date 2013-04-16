@@ -90,7 +90,7 @@ var Templates = `
 - (NSDictionary*) dictionary;
 {{end}}
 {{range .Methods}}
-- {{with .ConstructorForInterface}}({{.Name}} *){{else}}({{$interface.Name}}{{.Name}}Results *){{end}} {{.ParamsForObjcFunction}};
+- {{with .ConstructorForInterface}}({{.Name}} *){{else}}({{$interface.Name | .ResultsForObjcFunction}}){{end}} {{.ParamsForObjcFunction}};
 {{end}}@end
 {{end}}
 {{end}}
@@ -165,9 +165,9 @@ static {{.Name | title}} * _{{.Name}};
 	return [NSDictionary dictionaryWithObjectsAndKeys:nil];
 }
 {{end}}
-{{range .Methods}}
+{{range .Methods}}{{$method := .}}
 // --- {{.Name}} ---
-- {{with .ConstructorForInterface}}({{.Name}} *){{else}}({{$interface.Name}}{{.Name}}Results *){{end}} {{.ParamsForObjcFunction}} {
+- {{with .ConstructorForInterface}}({{.Name}} *){{else}}({{$interface.Name | .ResultsForObjcFunction}}){{end}} {{.ParamsForObjcFunction}} {
 	{{with .ConstructorForInterface}}
 	{{.Name}} *results = [[{{.Name}} alloc] init];
 	{{range .Constructor.Method.Params}}{{$f := .ToLanguageField "objc"}}[results set{{$f.Name | title}}:{{$f.Name}}];
@@ -188,11 +188,11 @@ static {{.Name | title}} * _{{.Name}};
 			NSLog(@"Error: %@", error);
 		}
 		[results setErr:error];
-		return results;
+		return {{$method.ObjcReturnResultsOrOnlyOne}};
 	}
 	results = [results initWithDictionary: dict];
 	{{end}}
-	return results;
+	return {{$method.ObjcReturnResultsOrOnlyOne}};
 }
 {{end}}@end
 {{end}}

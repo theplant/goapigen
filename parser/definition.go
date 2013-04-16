@@ -99,6 +99,26 @@ func (m *Method) ParamsForObjcFunction() (r string) {
 	return
 }
 
+func (m *Method) ObjcReturnResultsOrOnlyOne() (r string) {
+	if len(m.Results) == 1 {
+		r = "results." + strings.Title(m.Results[0].Name)
+		return
+	}
+	return "results"
+}
+
+func (m *Method) ResultsForObjcFunction(interfaceName string) (r string) {
+	if len(m.Results) > 1 {
+		r = interfaceName + m.Name + "Results *"
+		return
+	}
+	if len(m.Results) == 0 {
+		panic("method " + m.Name + "returned zero values")
+	}
+	r = m.Results[0].ToLanguageField("objc").Type
+	return
+}
+
 func (m *Method) ParamsForGoServerFunction() (r string) {
 	ps := []string{}
 	for _, p := range m.Params {
