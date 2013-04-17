@@ -98,9 +98,9 @@ func printserver(dir string, apiset *parser.APISet, apipkg string, impl string) 
 
 func printobjc(dir string, apiset *parser.APISet) {
 	tpl := codeTemplate()
-	hfile, err1 := os.Create(filepath.Join(dir, apiset.Name+".h"))
+	hfile, err1 := os.Create(filepath.Join(dir, strings.Title(apiset.Name)+".h"))
 	dieIf(err1, err1 != nil)
-	mfile, err2 := os.Create(filepath.Join(dir, apiset.Name+".m"))
+	mfile, err2 := os.Create(filepath.Join(dir, strings.Title(apiset.Name)+".m"))
 	dieIf(err2, err2 != nil)
 	err3 := tpl.ExecuteTemplate(hfile, "objc/h", apiset)
 	dieIf(err3, err3 != nil)
