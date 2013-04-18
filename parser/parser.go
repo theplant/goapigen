@@ -203,11 +203,6 @@ func sortInterfaces(apiset *APISet) {
 	sort.Sort(byDepthInterfaces{apiset.Interfaces})
 }
 
-// func typeDefinedIn(t string, apiset *APISet) (r bool) {
-// 	n := findDefiniationNode(t, apiset)
-// 	return n != nil
-// }
-
 func parseField(n *ast.Field) (r []*Field) {
 	for _, id := range n.Names {
 		f := &Field{}

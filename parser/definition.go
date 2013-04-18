@@ -167,6 +167,11 @@ type Field struct {
 	GetPropertyConvertFormatter string
 	Primitive                   bool
 	ConstructorType             string
+	PkgName                     string
+}
+
+func (f Field) IsError() bool {
+	return f.Type == "error"
 }
 
 func (f Field) FullGoTypeName() (r string) {
@@ -226,6 +231,7 @@ func findDefiniationNode(t string, apiset *APISet) (r Node) {
 }
 
 func (f *Field) Update(apiset *APISet, parentNode Node) {
+	f.PkgName = apiset.Name
 	n := findDefiniationNode(f.Type, apiset)
 	f.Primitive = true
 	if n != nil {
@@ -245,9 +251,10 @@ func (f Field) ToLanguageField(language string) (r Field) {
 	r.IsArray = f.IsArray
 	r.Star = f.Star
 	r.ImportName = f.ImportName
+	r.Primitive = f.Primitive
+	r.PkgName = f.PkgName
 	t := languageMap.TypeOf(f)
 	r.Type = t.Type
-	r.Primitive = f.Primitive
 	r.PropertyAnnotation = t.PropertyAnnotation
 	r.SetPropertyConvertFormatter = t.SetPropertyConvertFormatter
 	r.GetPropertyConvertFormatter = t.GetPropertyConvertFormatter

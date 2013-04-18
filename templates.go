@@ -9,16 +9,16 @@ var Templates = `
 	if (!self) {
 		return self;
 	}
-	if (dict == nil) {
+	if (dict == [NSNull null]) {
 		return self;
 	}
-{{range . }}{{$f := .ToLanguageField "objc"}}{{ $name := $f.Name | title }}{{if $f.Primitive }}{{if $f.IsArray}}	[self set{{$name}}:{{$f.SetPropertyObjc}}];{{else}}	[self set{{$name}}:{{$name | $f.SetPropertyFromObjcDict}}];{{end}}{{else}}{{if $f.IsArray}}
+{{range . }}{{$f := .ToLanguageField "objc"}}{{ $name := $f.Name | title }}{{if .IsError}}	[self set{{$name}}:[{{$f.PkgName | title}} errorWithDictionary:{{$f.SetPropertyObjc}}]];{{else}}{{if $f.Primitive }}{{if $f.IsArray}}	[self set{{$name}}:{{$f.SetPropertyObjc}}];{{else}}	[self set{{$name}}:{{$name | $f.SetPropertyFromObjcDict}}];{{end}}{{else}}{{if $f.IsArray}}
 	NSMutableArray * m{{$name}} = [[NSMutableArray alloc] init];
 	NSArray * l{{$name}} = [dict valueForKey:@"{{$name}}"];
 	for (NSDictionary * d in l{{$name}}) {
 		[m{{$name}} addObject: [[{{$f.ConstructorType}} alloc] initWithDictionary:d]];
 	}
-	[self set{{$name}}:m{{$name}}];{{else}}	[self set{{$name}}:[[{{$f.ConstructorType}} alloc] initWithDictionary:{{$name | $f.SetPropertyFromObjcDict}}]];{{end}}
+	[self set{{$name}}:m{{$name}}];{{else}}	[self set{{$name}}:[[{{$f.ConstructorType}} alloc] initWithDictionary:{{$name | $f.SetPropertyFromObjcDict}}]];{{end}}{{end}}
 	{{end}}
 {{end}}
 	return self;
@@ -55,9 +55,7 @@ var Templates = `
 @property (nonatomic, assign) BOOL Verbose;
 + ({{$pkgName}} *) get;
 + (NSDictionary *) request:(NSURL*)url req:(NSDictionary *)req error:(NSError **)error;
-@end
-
-@interface Error : NSObject
++ (NSError *)errorWithDictionary:(NSDictionary *)dict;
 @end
 
 @interface Validated : NSObject
@@ -108,6 +106,7 @@ static {{.Name | title}} * _{{.Name}};
 	}
 	return _{{.Name}};
 }
+
 + (NSDictionary *) request:(NSURL*)url req:(NSDictionary *)req error:(NSError **)error {
 	NSMutableURLRequest *httpRequest = [NSMutableURLRequest requestWithURL:url];
 	[httpRequest setHTTPMethod:@"POST"];
@@ -130,6 +129,34 @@ static {{.Name | title}} * _{{.Name}};
 		NSLog(@"Response: %@", [NSString stringWithUTF8String:[returnData bytes]]);
 	}
 	return [NSJSONSerialization JSONObjectWithData:returnData options:NSJSONReadingAllowFragments error:error];
+}
+
++ (NSError *)errorWithDictionary:(NSDictionary *)dict {
+	if (dict == [NSNull null]) {
+		return nil;
+	}
+	if ([[dict allKeys] count] == 0) {
+		return nil;
+	}
+	NSMutableDictionary *userInfo = [NSMutableDictionary alloc];
+	id reason = [dict valueForKey:@"Reason"];
+	if ([reason isKindOfClass:[NSDictionary class]]) {
+		userInfo = [userInfo initWithDictionary:reason];
+	} else {
+		userInfo = [userInfo init];
+	}
+	[userInfo setObject:[dict valueForKey:@"Message"] forKey:NSLocalizedDescriptionKey];
+
+	NSString *code = [dict valueForKey:@"Code"];
+	NSNumberFormatter *f = [[NSNumberFormatter alloc] init];
+	[f setNumberStyle:NSNumberFormatterDecimalStyle];
+	NSNumber *codeNumber = [f numberFromString:code];
+	NSInteger intCode = -1;
+	if (codeNumber != nil) {
+		intCode = [codeNumber integerValue];
+	}
+	NSError *err = [NSError errorWithDomain:@"{{$pkgName}}Error" code:intCode userInfo:userInfo];
+	return err;
 }
 
 @end
@@ -220,6 +247,7 @@ type CodeError interface {
 type SerializableError struct {
 	Code    string
 	Message string
+	Reason  error
 }
 
 func (s *SerializableError) Error() string {
@@ -232,6 +260,7 @@ func NewError(err error) (r error) {
 	if yes {
 		se.Code = ce.Code()
 	}
+	se.Reason = err
 	r = se
 	return
 }
