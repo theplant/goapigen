@@ -196,10 +196,10 @@ static {{.Name | title}} * _{{.Name}};
 // --- {{.Name}} ---
 - {{with .ConstructorForInterface}}({{.Name}} *){{else}}({{$interface.Name | .ResultsForObjcFunction}}){{end}} {{.ParamsForObjcFunction}} {
 	{{with .ConstructorForInterface}}
-	{{.Name}} *results = [[{{.Name}} alloc] init];
+	{{.Name}} *results = [{{.Name}} alloc];
 	{{range .Constructor.Method.Params}}{{$f := .ToLanguageField "objc"}}[results set{{$f.Name | title}}:{{$f.Name}}];
 	{{end}}{{else}}
-	{{$interface.Name}}{{.Name}}Results *results = [[{{$interface.Name}}{{.Name}}Results alloc] init];
+	{{$interface.Name}}{{.Name}}Results *results = [{{$interface.Name}}{{.Name}}Results alloc];
 	{{$interface.Name}}{{.Name}}Params *params = [[{{$interface.Name}}{{.Name}}Params alloc] init];
 	{{range .Params}}{{$f := .ToLanguageField "objc"}}[params set{{$f.Name | title}}:{{$f.Name}}];
 	{{end}}
@@ -214,6 +214,7 @@ static {{.Name | title}} * _{{.Name}};
 		if([_api Verbose]) {
 			NSLog(@"Error: %@", error);
 		}
+		results = [results init];
 		[results setErr:error];
 		return {{$method.ObjcReturnResultsOrOnlyOne}};
 	}
