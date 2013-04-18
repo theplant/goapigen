@@ -9,7 +9,7 @@ var Templates = `
 	if (!self) {
 		return self;
 	}
-	if (dict == [NSNull null]) {
+	if (![dict isKindOfClass:[NSDictionary class]]) {
 		return self;
 	}
 {{range . }}{{$f := .ToLanguageField "objc"}}{{ $name := $f.Name | title }}{{if .IsError}}	[self set{{$name}}:[{{$f.PkgName | title}} errorWithDictionary:{{$f.SetPropertyObjc}}]];{{else}}{{if $f.Primitive }}{{if $f.IsArray}}	[self set{{$name}}:{{$f.SetPropertyObjc}}];{{else}}	[self set{{$name}}:{{$name | $f.SetPropertyFromObjcDict}}];{{end}}{{else}}{{if $f.IsArray}}
@@ -132,7 +132,7 @@ static {{.Name | title}} * _{{.Name}};
 }
 
 + (NSError *)errorWithDictionary:(NSDictionary *)dict {
-	if (dict == [NSNull null]) {
+	if (![dict isKindOfClass:[NSDictionary class]]) {
 		return nil;
 	}
 	if ([[dict allKeys] count] == 0) {
@@ -317,6 +317,9 @@ func {{$interface.Name}}_{{$method.Name}}(w http.ResponseWriter, r *http.Request
 		return
 	}
 	{{$method.ResultsForGoServerFunction "result"}} = s.{{$method.Name}}({{$method.ParamsForGoServerFunction}})
+	if result.Err != nil {
+		result.Err = NewError(result.Err)
+	}
 	err = enc.Encode(result)
 	if err != nil {
 		panic(err)
