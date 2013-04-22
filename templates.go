@@ -55,6 +55,7 @@ var Templates = `
 @property (nonatomic, strong) NSString * BaseURL;
 @property (nonatomic, assign) BOOL Verbose;
 + ({{$pkgName}} *) get;
+
 @end
 
 @interface Validated : NSObject
@@ -101,19 +102,39 @@ static {{.Name | title}} * _{{.Name}};
 static NSDateFormatter * _dateFormatter;
 
 @implementation {{.Name | title}} : NSObject
-+ ({{.Name | title}} *)get {
++ ({{.Name | title}} *) get {
 	if(!_{{.Name}}) {
 		_{{.Name}} = [[{{.Name | title}} alloc] init];
 	}
 	return _{{.Name}};
 }
 
-+ (NSDateFormatter *)dateFormatter {
++ (NSDateFormatter *) dateFormatter {
 	if(!_dateFormatter) {
 		_dateFormatter = [[NSDateFormatter alloc] init];
-		[_dateFormatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ"];
+		[_dateFormatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ss.SSSZZZZ"];
 	}
 	return _dateFormatter;
+}
+
++ (NSDate *) dateFromString:(NSString *)dateString {
+	if(!dateString) {
+		return nil;
+	}
+	NSRange range = [dateString rangeOfString:@":" options:NSBackwardsSearch];
+	if (range.location != NSNotFound && range.location >= dateString.length - 4) {
+		dateString = [dateString stringByReplacingCharactersInRange:range withString:@""];
+	}
+	return [[{{.Name | title}} dateFormatter] dateFromString:dateString];
+}
+
++ (NSString *) stringFromDate:(NSDate *) date {
+	if(!date) {
+		return nil;
+	}
+	NSString * dateString = [[{{.Name | title}} dateFormatter] stringFromDate:date];
+	dateString = [[[dateString substringToIndex:(dateString.length - 3)] stringByAppendingString:@":"] stringByAppendingString:[dateString substringFromIndex:(dateString.length - 2)]];
+	return dateString;
 }
 
 + (NSDictionary *) request:(NSURL*)url req:(NSDictionary *)req error:(NSError **)error {

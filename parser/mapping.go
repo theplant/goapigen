@@ -22,7 +22,7 @@ var TypeMapping = map[string]TypeMap{
 			"error":                   {"NSError *", "(nonatomic, strong)", "%s", "%s", "NSError"},
 			"template.HTML":           {"NSString *", "(nonatomic, strong)", "%s", "%s", "NSString"},
 			"template.HTMLAttr":       {"NSString *", "(nonatomic, strong)", "%s", "%s", "NSString"},
-			"time.Time":               {"NSDate *", "(nonatomic, strong)", "[[%s dateFormatter] stringFromDate:%s]", "[[%s dateFormatter] dateFromString:%s]", "NSDate"},
+			"time.Time":               {"NSDate *", "(nonatomic, strong)", "[%s stringFromDate:%s]", "[%s dateFromString:%s]", "NSDate"},
 			"govalidations.Validated": {"Validated *", "(nonatomic, strong)", "%s", "%s", "Validated"},
 		},
 		UnknownFunc: func(f Field) (r LanguageType) {
