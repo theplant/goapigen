@@ -197,7 +197,12 @@ func (f Field) FullObjcTypeName() (r string) {
 }
 
 func (f Field) SetPropertyFromObjcDict(key string) (r string) {
-	r = fmt.Sprintf(f.SetPropertyConvertFormatter, "[dict valueForKey:@\""+key+"\"]")
+	val := "[dict valueForKey:@\"" + key + "\"]"
+	if len(strings.Split(f.SetPropertyConvertFormatter, "%s")) == 3 {
+		r = fmt.Sprintf(f.SetPropertyConvertFormatter, strings.Title(f.PkgName), val)
+		return
+	}
+	r = fmt.Sprintf(f.SetPropertyConvertFormatter, val)
 	return
 }
 
@@ -207,6 +212,11 @@ func (f Field) SetPropertyObjc() (r string) {
 }
 
 func (f Field) GetPropertyToObjcDict(key string) (r string) {
+	if len(strings.Split(f.GetPropertyConvertFormatter, "%s")) == 3 {
+		r = fmt.Sprintf(f.GetPropertyConvertFormatter, strings.Title(f.PkgName), key)
+		return
+	}
+
 	r = fmt.Sprintf(f.GetPropertyConvertFormatter, key)
 	return
 }

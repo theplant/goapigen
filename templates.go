@@ -15,11 +15,12 @@ var Templates = `
 {{range . }}{{$f := .ToLanguageField "objc"}}{{ $name := $f.Name | title }}{{if .IsError}}	[self set{{$name}}:[{{$f.PkgName | title}} errorWithDictionary:{{$f.SetPropertyObjc}}]];{{else}}{{if $f.Primitive }}{{if $f.IsArray}}	[self set{{$name}}:{{$f.SetPropertyObjc}}];{{else}}	[self set{{$name}}:{{$name | $f.SetPropertyFromObjcDict}}];{{end}}{{else}}{{if $f.IsArray}}
 	NSMutableArray * m{{$name}} = [[NSMutableArray alloc] init];
 	NSArray * l{{$name}} = [dict valueForKey:@"{{$name}}"];
-	for (NSDictionary * d in l{{$name}}) {
-		[m{{$name}} addObject: [[{{$f.ConstructorType}} alloc] initWithDictionary:d]];
+	if ([l{{$name}} isKindOfClass:[NSArray class]]) {
+		for (NSDictionary * d in l{{$name}}) {
+			[m{{$name}} addObject: [[{{$f.ConstructorType}} alloc] initWithDictionary:d]];
+		}
 	}
-	[self set{{$name}}:m{{$name}}];{{else}}	[self set{{$name}}:[[{{$f.ConstructorType}} alloc] initWithDictionary:{{$name | $f.SetPropertyFromObjcDict}}]];{{end}}{{end}}
-	{{end}}
+	[self set{{$name}}:m{{$name}}];{{else}}	[self set{{$name}}:[[{{$f.ConstructorType}} alloc] initWithDictionary:{{$name | $f.SetPropertyFromObjcDict}}]];{{end}}{{end}}{{end}}
 {{end}}
 	return self;
 }
@@ -54,8 +55,6 @@ var Templates = `
 @property (nonatomic, strong) NSString * BaseURL;
 @property (nonatomic, assign) BOOL Verbose;
 + ({{$pkgName}} *) get;
-+ (NSDictionary *) request:(NSURL*)url req:(NSDictionary *)req error:(NSError **)error;
-+ (NSError *)errorWithDictionary:(NSDictionary *)dict;
 @end
 
 @interface Validated : NSObject
@@ -99,12 +98,22 @@ var Templates = `
 #import "{{.Name}}.h"
 
 static {{.Name | title}} * _{{.Name}};
+static NSDateFormatter * _dateFormatter;
+
 @implementation {{.Name | title}} : NSObject
 + ({{.Name | title}} *)get {
 	if(!_{{.Name}}) {
 		_{{.Name}} = [[{{.Name | title}} alloc] init];
 	}
 	return _{{.Name}};
+}
+
++ (NSDateFormatter *)dateFormatter {
+	if(!_dateFormatter) {
+		_dateFormatter = [[NSDateFormatter alloc] init];
+		[_dateFormatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ"];
+	}
+	return _dateFormatter;
 }
 
 + (NSDictionary *) request:(NSURL*)url req:(NSDictionary *)req error:(NSError **)error {
