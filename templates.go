@@ -323,6 +323,9 @@ type {{$interface.Name}}_{{$method.Name}}_Results struct {
 }
 
 func {{$interface.Name}}_{{$method.Name}}(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
+	w.Header().Add("Access-Control-Allow-Origin", "*")
+
 	var p {{$interface.Name}}_{{$method.Name}}_Params
 	if r.Body == nil {
 		panic("no body")
