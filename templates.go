@@ -20,7 +20,10 @@ var Templates = `
 			[m{{$name}} addObject: [[{{$f.ConstructorType}} alloc] initWithDictionary:d]];
 		}
 	}
-	[self set{{$name}}:m{{$name}}];{{else}}	[self set{{$name}}:[[{{$f.ConstructorType}} alloc] initWithDictionary:{{$name | $f.SetPropertyFromObjcDict}}]];{{end}}{{end}}{{end}}
+	[self set{{$name}}:m{{$name}}];{{else}}	id dict{{$name}} = {{$name | $f.SetPropertyFromObjcDict}};
+	if ([dict{{$name}} isKindOfClass:[NSDictionary class]]){
+		[self set{{$name}}:[[{{$f.ConstructorType}} alloc] initWithDictionary:dict{{$name}}]];
+	}{{end}}{{end}}{{end}}
 {{end}}
 	return self;
 }
