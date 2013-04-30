@@ -9,7 +9,7 @@ import (
 	"sort"
 )
 
-func Parse(dir string) (r *APISet) {
+func Parse(dir string, prefix string) (r *APISet) {
 
 	fset := token.NewFileSet()
 
@@ -24,6 +24,7 @@ func Parse(dir string) (r *APISet) {
 
 	// ast.Print(fset, foundPkg)
 	ast.Walk(w, foundPkg)
+	w.APISet.Prefix = prefix
 	updateConstructors(w.APISet)
 	updateFields(w.APISet)
 	sortDataObjects(w.APISet)

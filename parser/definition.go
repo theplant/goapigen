@@ -109,7 +109,7 @@ func (m *Method) ObjcReturnResultsOrOnlyOne() (r string) {
 
 func (m *Method) ResultsForObjcFunction(interfaceName string) (r string) {
 	if len(m.Results) > 1 {
-		r = interfaceName + m.Name + "Results *"
+		r = m.Results[0].Prefix + interfaceName + m.Name + "Results *"
 		return
 	}
 	if len(m.Results) == 0 {
@@ -168,6 +168,7 @@ type Field struct {
 	Primitive                   bool
 	ConstructorType             string
 	PkgName                     string
+	Prefix                      string
 }
 
 func (f Field) IsError() bool {
@@ -192,14 +193,18 @@ func (f Field) FullObjcTypeName() (r string) {
 	if f.IsArray {
 		return "NSArray *"
 	}
-	r = f.Type
+	if f.Primitive {
+		r = f.Type
+		return
+	}
+	r = f.Prefix + f.Type
 	return
 }
 
 func (f Field) SetPropertyFromObjcDict(key string) (r string) {
 	val := "[dict valueForKey:@\"" + key + "\"]"
 	if len(strings.Split(f.SetPropertyConvertFormatter, "%s")) == 3 {
-		r = fmt.Sprintf(f.SetPropertyConvertFormatter, strings.Title(f.PkgName), val)
+		r = fmt.Sprintf(f.SetPropertyConvertFormatter, f.Prefix+strings.Title(f.PkgName), val)
 		return
 	}
 	r = fmt.Sprintf(f.SetPropertyConvertFormatter, val)
@@ -213,7 +218,7 @@ func (f Field) SetPropertyObjc() (r string) {
 
 func (f Field) GetPropertyToObjcDict(key string) (r string) {
 	if len(strings.Split(f.GetPropertyConvertFormatter, "%s")) == 3 {
-		r = fmt.Sprintf(f.GetPropertyConvertFormatter, strings.Title(f.PkgName), key)
+		r = fmt.Sprintf(f.GetPropertyConvertFormatter, f.Prefix+strings.Title(f.PkgName), key)
 		return
 	}
 
@@ -242,6 +247,7 @@ func findDefiniationNode(t string, apiset *APISet) (r Node) {
 
 func (f *Field) Update(apiset *APISet, parentNode Node) {
 	f.PkgName = apiset.Name
+	f.Prefix = apiset.Prefix
 	n := findDefiniationNode(f.Type, apiset)
 	f.Primitive = true
 	if n != nil {
@@ -263,6 +269,7 @@ func (f Field) ToLanguageField(language string) (r Field) {
 	r.ImportName = f.ImportName
 	r.Primitive = f.Primitive
 	r.PkgName = f.PkgName
+	r.Prefix = f.Prefix
 	t := languageMap.TypeOf(f)
 	r.Type = t.Type
 	r.PropertyAnnotation = t.PropertyAnnotation
@@ -274,6 +281,7 @@ func (f Field) ToLanguageField(language string) (r Field) {
 
 type APISet struct {
 	Name          string
+	Prefix        string
 	ImplPkg       string
 	ServerImports []string
 	Interfaces    []*Interface

@@ -15,6 +15,7 @@ var pkg = flag.String("pkg", "", "Put a full go package path like 'github.com/th
 var lang = flag.String("lang", "javascript", "put language like 'javascript', 'objc', 'java'")
 var outdir = flag.String("outdir", ".", "the dir to output the generated source code")
 var impl = flag.String("impl", "", "implementation package like 'github.com/theplant/qortex/services'")
+var prefix = flag.String("prefix", "", "the prefix of structs and services")
 
 func main() {
 	flag.Parse()
@@ -25,7 +26,7 @@ func main() {
 		die(err)
 	}
 
-	apis := parser.Parse(buildpkg.Dir)
+	apis := parser.Parse(buildpkg.Dir, *prefix)
 
 	switch *lang {
 	case "javascript":
