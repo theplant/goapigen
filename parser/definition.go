@@ -158,6 +158,7 @@ func (m *Method) ParamsForJson() (r string) {
 
 type Field struct {
 	IsArray                     bool
+	IsMap                       bool
 	Type                        string
 	Name                        string
 	Star                        bool
@@ -178,6 +179,9 @@ func (f Field) IsError() bool {
 func (f Field) FullGoTypeName() (r string) {
 	if f.IsArray {
 		r = r + "[]"
+	}
+	if f.IsMap {
+		r = r + "map"
 	}
 	if f.Star {
 		r = r + "*"
@@ -265,6 +269,7 @@ func (f Field) ToLanguageField(language string) (r Field) {
 
 	r.Name = f.Name
 	r.IsArray = f.IsArray
+	r.IsMap = f.IsMap
 	r.Star = f.Star
 	r.ImportName = f.ImportName
 	r.Primitive = f.Primitive
