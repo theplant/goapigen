@@ -19,8 +19,9 @@ var Templates = `
 		for (NSDictionary * d in l{{$name}}) {
 			[m{{$name}} addObject: [[{{$f.Prefix}}{{$f.ConstructorType}} alloc] initWithDictionary:d]];
 		}
-	}
-	[self set{{$name}}:m{{$name}}];{{else}}	id dict{{$name}} = {{$name | $f.SetPropertyFromObjcDict}};
+		[self set{{$name}}:m{{$name}}];
+	}{{else}}
+	id dict{{$name}} = {{$name | $f.SetPropertyFromObjcDict}};
 	if ([dict{{$name}} isKindOfClass:[NSDictionary class]]){
 		[self set{{$name}}:[[{{$f.Prefix}}{{$f.ConstructorType}} alloc] initWithDictionary:dict{{$name}}]];
 	}{{end}}{{end}}{{end}}
