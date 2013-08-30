@@ -266,6 +266,66 @@ static NSDateFormatter * _dateFormatter;
 
 
 
+{{define "java/properties"}}
+{{range . }}{{$f := .ToLanguageField "java"}}	@SerializedName("{{$f.Name | title}}")
+	private {{$f.FullJavaTypeName}} _{{$f.Name | snake}};
+
+{{end}}
+
+{{range . }}{{$f := .ToLanguageField "java"}}	public {{$f.FullJavaTypeName}} get{{$f.Name | title }}() {
+		return this._{{$f.Name | snake}};
+	}
+	public void set{{$f.Name | title }}({{$f.FullJavaTypeName}} _{{$f.Name | snake}}) {
+		this._{{$f.Name | snake}} = _{{$f.Name | snake}};
+	}
+
+{{end}}
+{{end}}
+
+
+{{define "java/remote_error"}}
+
+import java.util.HashMap;
+import com.google.gson.annotations.SerializedName;
+
+public class RemoteError {
+	@SerializedName("Code")
+	private String _code;
+	@SerializedName("Message")
+	private String _message;
+	@SerializedName("Reason")
+	private HashMap _reason;
+
+	public String getCode() {
+		return this._code;
+	}
+	public void setCode(String _code) {
+		this._code = _code;
+	}
+	public String getMessage() {
+		return this._message;
+	}
+	public void setMessage(String _message) {
+		this._message = _message;
+	}
+	public HashMap getReason() {
+		return this._reason;
+	}
+	public void setReason(HashMap _reason) {
+		this._reason = _reason;
+	}
+}
+{{end}}
+
+{{define "java/validated"}}
+public class Validated {
+}
+{{end}}
+
+{{define "java/pkg_object"}}
+
+{{end}}
+
 
 {{define "java/dataobject"}}
 {{if .HasTimeType}}import java.util.Date;{{end}}
@@ -274,23 +334,56 @@ static NSDateFormatter * _dateFormatter;
 import com.google.gson.annotations.SerializedName;
 
 public class {{.Name}} {
-{{range .Fields }}{{$f := .ToLanguageField "java"}}	@SerializedName("{{$f.Name}}")
-	private {{$f.FullJavaTypeName}} _{{$f.Name | snake}};
-
-{{end}}
-
-{{range .Fields }}{{$f := .ToLanguageField "java"}}	public {{$f.FullJavaTypeName}} get{{$f.Name}}() {
-		return this._{{$f.Name | snake}};
-	}
-	public void set{{$f.Name}}({{$f.FullJavaTypeName}} _{{$f.Name | snake}}) {
-		this._{{$f.Name | snake}} = _{{$f.Name | snake}};
-	}
-
-{{end}}
+{{template "java/properties" .Fields}}
 }
 
 {{end}}
 
+
+
+{{define "java/interface"}}
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Date;
+import com.google.gson.annotations.SerializedName;
+public class {{.Interface.Name}} {
+{{$apiprefix := .Prefix}}{{$interface := .Interface}}{{$pkgName := .PkgName}}
+{{with .Interface}}{{with .Constructor}}
+{{template "java/properties" .Method.Params}}
+{{end}}
+
+{{range .Methods}}{{$method := .}}
+
+	{{with .ConstructorForInterface}}public {{$apiprefix}}{{.Name}} {{else}}
+	// --- {{.Name}}Params ---
+	public static class {{.Name}}Params {
+		{{template "java/properties" .Params}}
+	}
+	// --- {{.Name}}Results ---
+	public static class {{.Name}}Results {
+		{{template "java/properties" .Results}}
+	}
+	// --- {{.Name}} ---
+	public {{$interface.Name | .ResultsForJavaFunction}} {{end}}{{.Name | snake}}({{.ParamsForJavaFunction}}) {
+	{{with .ConstructorForInterface}}
+	{{$apiprefix}}{{.Name}} results = new {{$apiprefix}}{{.Name}}();
+	{{range .Constructor.Method.Params}}{{$f := .ToLanguageField "java"}}results.set{{$f.Name | title}}({{$f.Name}});
+	{{end}}{{else}}
+	{{.Name}}Results results = new {{.Name}}Results();
+	{{.Name}}Params params = new {{.Name}}Params();
+	{{range .Params}}{{$f := .ToLanguageField "java"}}params.set{{$f.Name | title}}({{$f.Name}});
+	{{end}}
+	//{{$apiprefix}}{{$pkgName}} * _api = [{{$apiprefix}}{{$pkgName}} get];
+
+	{{end}}
+
+	return {{$method.JavaReturnResultsOrOnlyOne}};
+	}
+{{end}}
+{{end}}
+}
+
+{{end}}
 
 
 

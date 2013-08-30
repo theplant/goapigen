@@ -126,9 +126,32 @@ func (m *Method) ParamsForObjcFunction() (r string) {
 	return
 }
 
+func (m *Method) ParamsForJavaFunction() (r string) {
+	if len(m.Params) == 0 {
+		r = ""
+		return
+	}
+
+	ps := []string{}
+	for _, p := range m.Params {
+		op := p.ToLanguageField("java")
+		ps = append(ps, op.FullJavaTypeName()+" "+op.Name)
+	}
+	r = strings.Join(ps, ",")
+	return
+}
+
 func (m *Method) ObjcReturnResultsOrOnlyOne() (r string) {
 	if len(m.Results) == 1 {
 		r = "results." + strings.Title(m.Results[0].Name)
+		return
+	}
+	return "results"
+}
+
+func (m *Method) JavaReturnResultsOrOnlyOne() (r string) {
+	if len(m.Results) == 1 {
+		r = "results.get" + strings.Title(m.Results[0].Name) + "()"
 		return
 	}
 	return "results"
@@ -143,6 +166,18 @@ func (m *Method) ResultsForObjcFunction(interfaceName string) (r string) {
 		panic("method " + m.Name + "returned zero values")
 	}
 	r = m.Results[0].ToLanguageField("objc").Type
+	return
+}
+
+func (m *Method) ResultsForJavaFunction(interfaceName string) (r string) {
+	if len(m.Results) > 1 {
+		r = m.Name + "Results"
+		return
+	}
+	if len(m.Results) == 0 {
+		panic("method " + m.Name + "returned zero values")
+	}
+	r = m.Results[0].ToLanguageField("java").Type
 	return
 }
 

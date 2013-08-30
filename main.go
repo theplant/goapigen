@@ -114,13 +114,27 @@ func printjava(dir string, apiset *parser.APISet, javapackage string) {
 	tpl := codeTemplate()
 
 	for _, dataobj := range apiset.DataObjects {
-		jfile, err := os.Create(filepath.Join(filedir, strings.Title(dataobj.Name)+".java"))
-		dieIf(err, err != nil)
-		fmt.Fprintf(jfile, "package %s;\n\n", javapackage)
-		err = tpl.ExecuteTemplate(jfile, "java/dataobject", dataobj)
-		dieIf(err, err != nil)
+		writeSingleJavaFile(tpl, filedir, javapackage, "java/dataobject", dataobj.Name, dataobj)
 	}
 
+	for _, inf := range apiset.Interfaces {
+		data := make(map[string]interface{})
+		data["Prefix"] = apiset.Prefix
+		data["Interface"] = inf
+		data["PkgName"] = strings.Title(apiset.Name)
+		writeSingleJavaFile(tpl, filedir, javapackage, "java/interface", inf.Name, data)
+	}
+	writeSingleJavaFile(tpl, filedir, javapackage, "java/remote_error", "RemoteError", nil)
+	writeSingleJavaFile(tpl, filedir, javapackage, "java/validated", "Validated", nil)
+}
+
+func writeSingleJavaFile(tpl *template.Template, filedir string, javapackage string, templateName string, name string, data interface{}) {
+	jfile, err := os.Create(filepath.Join(filedir, strings.Title(name)+".java"))
+	defer jfile.Close()
+	dieIf(err, err != nil)
+	fmt.Fprintf(jfile, "package %s;\n\n", javapackage)
+	err = tpl.ExecuteTemplate(jfile, templateName, data)
+	dieIf(err, err != nil)
 }
 
 func printobjc(dir string, apiset *parser.APISet) {
