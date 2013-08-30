@@ -30,6 +30,27 @@ var TypeMapping = map[string]TypeMap{
 			return
 		},
 	},
+	"java": TypeMap{
+		KnownMapping: map[string]LanguageType{
+			"string":                  {"String", "", "%s", "%s", "String"},
+			"int64":                   {"int", "", "%s", "%s", "int"},
+			"int32":                   {"int", "", "%s", "%s", "int"},
+			"int":                     {"int", "", "%s", "%s", "int"},
+			"float64":                 {"float", "", "%s", "%s", "float"},
+			"float32":                 {"float", "", "%s", "%s", "float"},
+			"float":                   {"float", "", "%s", "%s", "float"},
+			"bool":                    {"boolean", "", "%s", "%s", "boolean"},
+			"error":                   {"RemoteError", "", "%s", "%s", "RemoteError"},
+			"template.HTML":           {"String", "", "%s", "%s", "String"},
+			"template.HTMLAttr":       {"String", "", "%s", "%s", "String"},
+			"time.Time":               {"Date", "", "Utils.stringFromDate(%s)]", "Utils.dateFromString(%s)", "Date"},
+			"govalidations.Validated": {"Validated", "", "%s", "%s", "Validated"},
+		},
+		UnknownFunc: func(f Field) (r LanguageType) {
+			r = LanguageType{f.Type + "", "", "%s", "%s", f.Type}
+			return
+		},
+	},
 }
 
 type TypeMap struct {

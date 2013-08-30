@@ -16,6 +16,7 @@ var lang = flag.String("lang", "javascript", "put language like 'javascript', 'o
 var outdir = flag.String("outdir", ".", "the dir to output the generated source code")
 var impl = flag.String("impl", "", "implementation package like 'github.com/theplant/qortex/services'")
 var prefix = flag.String("prefix", "", "the prefix of structs and services")
+var javapackage = flag.String("java_package", "", "the package of generated java source code")
 
 func main() {
 	flag.Parse()
@@ -35,6 +36,8 @@ func main() {
 		printserver(*outdir, apis, *pkg, *impl)
 	case "objc":
 		printobjc(*outdir, apis)
+	case "java":
+		printjava(*outdir, apis, *javapackage)
 	}
 
 }
@@ -55,10 +58,16 @@ func codeTemplate() (tpl *template.Template) {
 	tpl = template.New("")
 	tpl = tpl.Funcs(template.FuncMap{
 		"title":       strings.Title,
+		"snake":       snake,
 		"downcase":    strings.ToLower,
 		"dotlastname": dotLastName,
 	})
 	tpl = template.Must(tpl.Parse(Templates))
+	return
+}
+
+func snake(name string) (r string) {
+	r = strings.ToLower(name[:1]) + name[1:]
 	return
 }
 
@@ -95,6 +104,23 @@ func printserver(dir string, apiset *parser.APISet, apipkg string, impl string) 
 	if err != nil {
 		panic(err)
 	}
+}
+
+func printjava(dir string, apiset *parser.APISet, javapackage string) {
+	dieIf("must use -java_package=com.qortex.android to give java package", javapackage == "")
+	filedir := filepath.Join(dir, strings.Replace(javapackage, ".", "/", -1))
+	err1 := os.MkdirAll(filedir, 0666)
+	dieIf(err1, err1 != nil)
+	tpl := codeTemplate()
+
+	for _, dataobj := range apiset.DataObjects {
+		jfile, err := os.Create(filepath.Join(filedir, strings.Title(dataobj.Name)+".java"))
+		dieIf(err, err != nil)
+		fmt.Fprintf(jfile, "package %s;\n\n", javapackage)
+		err = tpl.ExecuteTemplate(jfile, "java/dataobject", dataobj)
+		dieIf(err, err != nil)
+	}
+
 }
 
 func printobjc(dir string, apiset *parser.APISet) {

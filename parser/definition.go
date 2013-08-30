@@ -42,6 +42,33 @@ func (do *DataObject) AddChild(n Node) {
 	return
 }
 
+func (do *DataObject) HasTimeType() (r bool) {
+	for _, f := range do.Fields {
+		if f.Type == "time.Time" {
+			return true
+		}
+	}
+	return false
+}
+
+func (do *DataObject) HasArrayType() (r bool) {
+	for _, f := range do.Fields {
+		if f.IsArray {
+			return true
+		}
+	}
+	return false
+}
+
+func (do *DataObject) HasMapType() (r bool) {
+	for _, f := range do.Fields {
+		if f.IsMap {
+			return true
+		}
+	}
+	return false
+}
+
 func (inf *Interface) NodeName() string {
 	return inf.Name
 }
@@ -196,6 +223,21 @@ func (f Field) FullGoTypeName() (r string) {
 func (f Field) FullObjcTypeName() (r string) {
 	if f.IsArray {
 		return "NSArray *"
+	}
+	if f.Primitive {
+		r = f.Type
+		return
+	}
+	r = f.Prefix + f.Type
+	return
+}
+
+func (f Field) FullJavaTypeName() (r string) {
+	if f.IsArray {
+		return "ArrayList"
+	}
+	if f.IsMap {
+		return "HashMap"
 	}
 	if f.Primitive {
 		r = f.Type
