@@ -109,7 +109,7 @@ func printserver(dir string, apiset *parser.APISet, apipkg string, impl string) 
 func printjava(dir string, apiset *parser.APISet, javapackage string) {
 	dieIf("must use -java_package=com.qortex.android to give java package", javapackage == "")
 	filedir := filepath.Join(dir, strings.Replace(javapackage, ".", "/", -1))
-	err1 := os.MkdirAll(filedir, 0666)
+	err1 := os.MkdirAll(filedir, 0755)
 	dieIf(err1, err1 != nil)
 	tpl := codeTemplate()
 
