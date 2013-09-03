@@ -269,10 +269,10 @@ func (f Field) FullObjcTypeName() (r string) {
 
 func (f Field) FullJavaTypeName() (r string) {
 	if f.IsArray {
-		return "ArrayList"
+		return "ArrayList<" + f.Type + ">"
 	}
 	if f.IsMap {
-		return "HashMap"
+		return "Map"
 	}
 	if f.Primitive {
 		r = f.Type

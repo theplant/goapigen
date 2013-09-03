@@ -286,18 +286,29 @@ static NSDateFormatter * _dateFormatter;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 public class {{.Name | title}} {
 	public static {{.Name | title}} _instance;
+	public static String dateformat = "yyyy-MM-dd'T'HH:mm:ss.SSSZZZZ";
+	private static SimpleDateFormat _formatter = new SimpleDateFormat(dateformat);
 
 	public static {{.Name | title}} get() {
 		if (_instance == null) {
@@ -306,13 +317,35 @@ public class {{.Name | title}} {
 		return _instance;
 	}
 
+	private class DateDeserializer implements JsonDeserializer<Date> {
+		public Date deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+				throws JsonParseException {
+			String dateString = json.getAsJsonPrimitive().getAsString();
+
+			int len = dateString.length();
+			// get rid of ":" in the last timezone 08:00 of 2013-07-16T14:26:41.499+08:00
+			if (dateString.charAt(len-3) == ':' && dateString.charAt(len-6) == '+') {
+				dateString = dateString.substring(0, len-3) + dateString.substring(len-2, len);
+			}
+
+			Date r = null;
+			try {
+				r = _formatter.parse(dateString);
+			} catch (ParseException e) {
+			}
+
+			return r;
+		}
+	}
+
 	public Gson _gson;
 
 	public Gson gson() {
 		 if (_gson == null) {
 			 GsonBuilder b = new GsonBuilder();
-			 b.setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZZZZ");
+			 b.setDateFormat(dateformat);
 			 b.setPrettyPrinting();
+			 b.registerTypeAdapter(Date.class, new DateDeserializer());
 			 _gson = b.create();
 		 }
 		return _gson;
@@ -428,6 +461,11 @@ public class RemoteError {
 	public void setReason(Map _reason) {
 		this._reason = _reason;
 	}
+
+	@Override
+	public String toString() {
+		return String.format("%s: %s", this._code, this._message);
+	}
 }
 {{end}}
 
@@ -444,7 +482,7 @@ public class Validated {
 {{define "java/dataobject"}}
 {{if .HasTimeType}}import java.util.Date;{{end}}
 {{if .HasArrayType}}import java.util.ArrayList;{{end}}
-{{if .HasMapType}}import java.util.HashMap;{{end}}
+{{if .HasMapType}}import java.util.Map;{{end}}
 import com.google.gson.annotations.SerializedName;
 
 public class {{.Name}} {
