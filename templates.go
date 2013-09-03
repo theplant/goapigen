@@ -282,10 +282,124 @@ static NSDateFormatter * _dateFormatter;
 {{end}}
 {{end}}
 
+{{define "java/packageclass"}}
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
+
+public class {{.Name | title}} {
+	public static {{.Name | title}} _instance;
+
+	public static {{.Name | title}} get() {
+		if (_instance == null) {
+			_instance = new {{.Name | title}}();
+		}
+		return _instance;
+	}
+
+	public Gson _gson;
+
+	public Gson gson() {
+		 if (_gson == null) {
+			 GsonBuilder b = new GsonBuilder();
+			 b.setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZZZZ");
+			 b.setPrettyPrinting();
+			 _gson = b.create();
+		 }
+		return _gson;
+	}
+
+	public static class RequestResult {
+		private Reader reader;
+		private RemoteError err;
+
+		public Reader getReader() {
+			return reader;
+		}
+
+		public void setReader(Reader reader) {
+			this.reader = reader;
+		}
+
+		public RemoteError getErr() {
+			return err;
+		}
+
+		public void setErr(RemoteError err) {
+			this.err = err;
+		}
+	}
+
+	public static RequestResult request(String url, String body) {
+		RequestResult r = new RequestResult();
+		try {
+			URL u = new URL(url);
+
+			HttpURLConnection conn = (HttpURLConnection)u.openConnection();
+
+			conn.setRequestMethod("POST");
+			conn.setRequestProperty("Content-Type", "application/json;charset=utf-8");
+			conn.setDoInput(true);
+			conn.setDoOutput(true);
+
+			DataOutputStream wr = new DataOutputStream(conn.getOutputStream ());
+			wr.writeBytes(body);
+			wr.flush();
+			wr.close();
+
+			InputStream is = conn.getInputStream();
+
+			r.setReader(new InputStreamReader(is));
+
+		} catch (IOException e) {
+			RemoteError err = new RemoteError();
+			err.setMessage(e.getMessage());
+			err.setCode("-1");
+			Map reason = new HashMap();
+			reason.put("OriginalException", e);
+			err.setReason(reason);
+			r.setErr(err);
+		}
+
+		return r;
+	}
+
+	private String baseURL;
+
+	public String getBaseURL() {
+		return baseURL;
+	}
+
+	public void setBaseURL(String baseURL) {
+		this.baseURL = baseURL;
+	}
+
+	private boolean verbose;
+
+	public boolean isVerbose() {
+		return verbose;
+	}
+
+	public void setVerbose(boolean verbose) {
+		this.verbose = verbose;
+	}
+
+}
+
+{{end}}
 
 {{define "java/remote_error"}}
 
-import java.util.HashMap;
+import java.util.Map;
 import com.google.gson.annotations.SerializedName;
 
 public class RemoteError {
@@ -294,7 +408,7 @@ public class RemoteError {
 	@SerializedName("Message")
 	private String _message;
 	@SerializedName("Reason")
-	private HashMap _reason;
+	private Map _reason;
 
 	public String getCode() {
 		return this._code;
@@ -308,10 +422,10 @@ public class RemoteError {
 	public void setMessage(String _message) {
 		this._message = _message;
 	}
-	public HashMap getReason() {
+	public Map getReason() {
 		return this._reason;
 	}
-	public void setReason(HashMap _reason) {
+	public void setReason(Map _reason) {
 		this._reason = _reason;
 	}
 }
@@ -342,12 +456,16 @@ public class {{.Name}} {
 
 
 {{define "java/interface"}}
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Date;
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.Gson;
+
 public class {{.Interface.Name}} {
-{{$apiprefix := .Prefix}}{{$interface := .Interface}}{{$pkgName := .PkgName}}
+{{$apiprefix := .Prefix}}{{$interface := .Interface}}{{$pkgName := .PkgName}}{{$interfaceName := .Interface.Name}}
 {{with .Interface}}{{with .Constructor}}
 {{template "java/properties" .Method.Params}}
 {{end}}
@@ -369,11 +487,33 @@ public class {{.Interface.Name}} {
 	{{$apiprefix}}{{.Name}} results = new {{$apiprefix}}{{.Name}}();
 	{{range .Constructor.Method.Params}}{{$f := .ToLanguageField "java"}}results.set{{$f.Name | title}}({{$f.Name}});
 	{{end}}{{else}}
-	{{.Name}}Results results = new {{.Name}}Results();
+	{{.Name}}Results results = null;
 	{{.Name}}Params params = new {{.Name}}Params();
 	{{range .Params}}{{$f := .ToLanguageField "java"}}params.set{{$f.Name | title}}({{$f.Name}});
 	{{end}}
-	//{{$apiprefix}}{{$pkgName}} * _api = [{{$apiprefix}}{{$pkgName}} get];
+	{{$apiprefix}}{{$pkgName}} _api = {{$apiprefix}}{{$pkgName}}.get();
+
+	Gson gson = _api.gson();
+
+	Map m = new HashMap();
+	m.put("Params", params);
+	m.put("This", this);
+
+	String url = String.format("%s/{{$interfaceName}}/{{$method.Name}}.json", _api.getBaseURL());
+	String requestBody = gson.toJson(m);
+	Qortexapi.RequestResult r = Qortexapi.request(url, requestBody);
+
+	if (r.getErr() != null) {
+		results = new {{.Name}}Results();
+		results.setErr(r.getErr());
+		return {{$method.JavaReturnResultsOrOnlyOne}};
+	}
+
+	results = gson.fromJson(r.getReader(), {{$method.Name}}Results.class);
+	try {
+		r.getReader().close();
+	} catch (IOException e) {
+	}
 
 	{{end}}
 

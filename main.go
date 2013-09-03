@@ -126,6 +126,8 @@ func printjava(dir string, apiset *parser.APISet, javapackage string) {
 	}
 	writeSingleJavaFile(tpl, filedir, javapackage, "java/remote_error", "RemoteError", nil)
 	writeSingleJavaFile(tpl, filedir, javapackage, "java/validated", "Validated", nil)
+
+	writeSingleJavaFile(tpl, filedir, javapackage, "java/packageclass", strings.Title(apiset.Name), apiset)
 }
 
 func writeSingleJavaFile(tpl *template.Template, filedir string, javapackage string, templateName string, name string, data interface{}) {
