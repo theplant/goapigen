@@ -484,8 +484,9 @@ public class Validated {
 {{if .HasArrayType}}import java.util.ArrayList;{{end}}
 {{if .HasMapType}}import java.util.Map;{{end}}
 import com.google.gson.annotations.SerializedName;
+import java.io.Serializable;
 
-public class {{.Name}} {
+public class {{.Name}} implements Serializable {
 {{template "java/properties" .Fields}}
 }
 
@@ -501,8 +502,9 @@ import java.util.Map;
 import java.util.Date;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.Gson;
+import java.io.Serializable;
 
-public class {{.Interface.Name}} {
+public class {{.Interface.Name}} implements Serializable {
 {{$apiprefix := .Prefix}}{{$interface := .Interface}}{{$pkgName := .PkgName}}{{$interfaceName := .Interface.Name}}
 {{with .Interface}}{{with .Constructor}}
 {{template "java/properties" .Method.Params}}
