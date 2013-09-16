@@ -118,7 +118,7 @@ static NSDateFormatter * _dateFormatter;
 + (NSDateFormatter *) dateFormatter {
 	if(!_dateFormatter) {
 		_dateFormatter = [[NSDateFormatter alloc] init];
-		[_dateFormatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ss.SSSZZZZ"];
+		[_dateFormatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ssZZZZ"];
 	}
 	return _dateFormatter;
 }
@@ -127,11 +127,21 @@ static NSDateFormatter * _dateFormatter;
 	if(!dateString) {
 		return nil;
 	}
-	NSRange range = [dateString rangeOfString:@":" options:NSBackwardsSearch];
-	if (range.location != NSNotFound && range.location >= dateString.length - 4) {
-		dateString = [dateString stringByReplacingCharactersInRange:range withString:@""];
+
+	NSError *error;
+	NSRegularExpression *regexp = [NSRegularExpression regularExpressionWithPattern:@"\\.[0-9]*" options:0 error:&error];
+	NSAssert(!error, @"Error in regexp");
+
+	NSRange range = NSMakeRange(0, [dateString length]);
+	dateString = [regexp stringByReplacingMatchesInString:dateString options:0 range:range withTemplate:@""];
+
+	NSDate *date;
+	[[{{$apiprefix}}{{.Name | title}} dateFormatter] getObjectValue:&date forString:dateString range:nil error:&error];
+	if(error) {
+		if ([[{{$apiprefix}}{{.Name | title}} get] Verbose]) NSLog(@"Error formatting date %@: %@ (%@)", dateString, [error localizedDescription], error);
+		return nil;
 	}
-	return [[{{$apiprefix}}{{.Name | title}} dateFormatter] dateFromString:dateString];
+	return date;
 }
 
 + (NSString *) stringFromDate:(NSDate *) date {
