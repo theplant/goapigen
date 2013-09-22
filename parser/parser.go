@@ -70,9 +70,11 @@ func (w *Walker) Visit(node ast.Node) ast.Visitor {
 				w.currentMethod.Params = append(w.currentMethod.Params, fs...)
 			}
 
-			for _, result := range n.Results.List {
-				fs := parseField(result)
-				w.currentMethod.Results = append(w.currentMethod.Results, fs...)
+			if n.Results != nil {
+				for _, result := range n.Results.List {
+					fs := parseField(result)
+					w.currentMethod.Results = append(w.currentMethod.Results, fs...)
+				}
 			}
 			if len(w.currentMethod.Results) == 0 {
 				die("method " + w.currentName + " must have return values or must have return value names like (entry *Entry, err error)")
